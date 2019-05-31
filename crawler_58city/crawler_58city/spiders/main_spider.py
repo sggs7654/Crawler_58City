@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import scrapy
-import requests
+import base64
+from fontTools.ttLib import TTFont
+import io
+import re
+from scrapy.selector import Selector
 
 
 class MainSpider(scrapy.Spider):
@@ -24,18 +28,45 @@ class MainSpider(scrapy.Spider):
         url_list = [url_template.format(city) for city in city_list]
         # from scrapy.shell import inspect_response
         # inspect_response(response, self)
-        for url in url_list[0:1]:  # 先爬一个作为测试
+        for url in url_list[0:1]:  # 先爬一个城市作为测试
             yield scrapy.Request(url=url, callback=self.parse_house_list)
 
     def parse_house_list(self, response):
         """
-        在租房页面，解析广告标题，房间信息，租房价格三项数据
+        在租房页面，解析广告标题和租房价格
         """
-        li_list = response.xpath('//li[@class="house-cell"]')
-        titles, rooms, prices = [], [], []
+        # from scrapy.shell import inspect_response
+        # inspect_response(response, self)
+        new_response = self.cracking_font_encryption(response)
+        li_list = new_response.xpath('//li[@class="house-cell"]')
+        titles, prices = [], []
         for li in li_list:
             titles.append(li.xpath('.//a[@class="strongbox"]/text()').re(r'\s*(.*?)\s{3,}'))
-            rooms.append(li.xpath('.//p[@class="room"]/text()').get())
-            prices.append(li.xpath('.//b[@class="strongbox"]/text()').get())
+            prices.append(li.xpath('.//b[@class="strongbox"]/text()').get() + "元/月")
+        self.logger.error("check this out:", titles, prices)
+
+    def cracking_font_encryption(self, response):
+        """
+        破解字体反爬，参考：https://www.cnblogs.com/eastonliu/p/9925652.html
+        :param response: scrapy返回的response
+        :return: 破解字体反爬后的response
+        """
+        # 抓取加密字符串
+        base64_str = response.xpath('//head/script[position()=2]/text()').re(r"base64,(.*?)'\) format")[0]
+        b = base64.b64decode(base64_str)
+        font = TTFont(io.BytesIO(b))
+        bestcmap = font['cmap'].getBestCmap()
+        newmap = dict()  # 计算正常字体的映射字典
+        for key in bestcmap.keys():
+            value = int(re.search(r'(\d+)', bestcmap[key]).group(1)) - 1
+            key = hex(key)
+            newmap[key] = value
+        response_ = response.text  # 根据映射字典替换反爬字符
+        for key, value in newmap.items():
+            key_ = key.replace('0x', '&#x') + ';'
+            if key_ in response_:
+                response_ = response_.replace(key_, str(value))
+        return Selector(text=response_)  # 得到破解后的新response
+
 
 
