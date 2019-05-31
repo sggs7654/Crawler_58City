@@ -8,7 +8,8 @@
 import scrapy
 
 
-class Crawler58CityItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class HouseInfo(scrapy.Item):
+    table = '58city'
+    title = scrapy.Field()
+    price = scrapy.Field()
+

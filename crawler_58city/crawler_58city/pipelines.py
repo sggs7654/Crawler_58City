@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+import redis
+import logging
 
 
 class Crawler58CityPipeline(object):
+
+    def __init__(self):
+        self.db = redis.StrictRedis(host='localhost', port=6379, decode_responses=True)
+
     def process_item(self, item, spider):
-        return item
+        data = "【{}】{}".format(item['price'], item['title'])
+        self.db.sadd(item.table, data)

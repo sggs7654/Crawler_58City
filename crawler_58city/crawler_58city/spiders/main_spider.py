@@ -6,6 +6,7 @@ from fontTools.ttLib import TTFont
 import io
 import re
 from scrapy.selector import Selector
+from crawler_58city.items import HouseInfo
 
 
 class MainSpider(scrapy.Spider):
@@ -39,15 +40,21 @@ class MainSpider(scrapy.Spider):
         # inspect_response(response, self)
         new_response = self.cracking_font_encryption(response)
         li_list = new_response.xpath('//li[@class="house-cell"]')
-        titles, prices = [], []
+        # titles, prices = [], []
         for li in li_list:
-            titles.append(li.xpath('.//a[@class="strongbox"]/text()').re(r'\s*(.*?)\s{3,}'))
-            prices.append(li.xpath('.//b[@class="strongbox"]/text()').get() + "元/月")
-        self.logger.error("check this out:", titles, prices)
+            # titles.append(li.xpath('.//a[@class="strongbox"]/text()').re(r'\s*(.*?)\s{3,}'))
+            # prices.append(li.xpath('.//b[@class="strongbox"]/text()').get() + "元/月")
+            title = li.xpath('.//a[@class="strongbox"]/text()').re(r'\s*(.*?)\s{3,}')[0]
+            price = li.xpath('.//b[@class="strongbox"]/text()').get() + "元/月"
+            item = HouseInfo(title=title, price=price)
+            yield item
+        """
+        翻页，直到没有“下一页”的链接
+        """
 
     def cracking_font_encryption(self, response):
         """
-        破解字体反爬，参考：https://www.cnblogs.com/eastonliu/p/9925652.html
+        应对字体反爬
         :param response: scrapy返回的response
         :return: 破解字体反爬后的response
         """
