@@ -24,11 +24,11 @@ class MainSpider(scrapy.Spider):
         在城市切换页面中，解析并合成各城市租房页面的地址
         :yield: 各城市的租房页面
         """
+        # from scrapy.shell import inspect_response
+        # inspect_response(response, self)
         city_list = response.xpath("//script[position()=3]/text()").re(r':"(.*?)\|.*?"')
         url_template = 'https://{}.58.com/chuzu/'
         url_list = [url_template.format(city) for city in city_list]
-        # from scrapy.shell import inspect_response
-        # inspect_response(response, self)
         for url in url_list[0:1]:  # 先爬一个城市作为测试
             yield scrapy.Request(url=url, callback=self.parse_house_list)
 
