@@ -17,7 +17,8 @@ class MainSpider(scrapy.Spider):
         访问城市切换页面
         :yield: 城市切换页面
         """
-        yield scrapy.Request(url='https://www.58.com/changecity.html', callback=self.parse_city_href)
+        # yield scrapy.Request(url='https://www.58.com/changecity.html', callback=self.parse_city_href)
+        yield scrapy.Request(url='https://httpbin.org/get', callback=self.parse_city_href)
 
     def parse_city_href(self, response):
         """
@@ -26,11 +27,15 @@ class MainSpider(scrapy.Spider):
         """
         # from scrapy.shell import inspect_response
         # inspect_response(response, self)
-        city_list = response.xpath("//script[position()=3]/text()").re(r':"(.*?)\|.*?"')
-        url_template = 'https://{}.58.com/chuzu/'
-        url_list = [url_template.format(city) for city in city_list]
-        for url in url_list[0:1]:  # 先爬一个城市作为测试
-            yield scrapy.Request(url=url, callback=self.parse_house_list)
+        s = Selector(text=response.text)
+        origin = s.re(r'"origin": "(.*)"')
+        self.logger.error("origin", origin)
+
+        # city_list = response.xpath("//script[position()=3]/text()").re(r':"(.*?)\|.*?"')
+        # url_template = 'https://{}.58.com/chuzu/'
+        # url_list = [url_template.format(city) for city in city_list]
+        # for url in url_list[0:1]:  # 先爬一个城市作为测试
+        #     yield scrapy.Request(url=url, callback=self.parse_house_list)
 
     def parse_house_list(self, response):
         """

@@ -56,7 +56,8 @@ ROBOTSTXT_OBEY = False
 # Enable or disable downloader middlewares
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-   'crawler_58city.middlewares.RandomUAMiddleware': 500,
+   'crawler_58city.middlewares.RandomUAMiddleware': 490,
+   'crawler_58city.middlewares.ProxyMiddleware': 500
 }
 
 # Enable or disable extensions
